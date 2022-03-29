@@ -23,14 +23,9 @@ def collect_samples(function_list, sample_pos_):
 # ########################################################################################### #
 def compute_estimate_cmc(sample_prob_, sample_values_):
     # TODO: PUT YOUR CODE HERE
-    print('Sample_Set')
-    print(sample_values_[:3])
-    print('Sample_Prob')
-    print(sample_prob_[:3])
     sum = 0
-    for k,i in sample_values_:
-        
-        sum += i/sample_prob_[k]
+    for k,i in enumerate(sample_values_):
+        sum += i.r/sample_prob_[k]
     return sum / len(sample_values_)
 
 
@@ -91,29 +86,31 @@ n_samples_count = len(ns_vector)
 # Initialize a matrix of estimate error at zero
 results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
 
+n_runs = 50
 
 # ################################# #
 #          MAIN LOOP                #
 # ################################# #
+for i in range(n_runs):
+    # for each sample count considered
+    for k, ns in enumerate(ns_vector):
 
-# for each sample count considered
-for k, ns in enumerate(ns_vector):
+        print(f'Computing estimates using {ns} samples')
 
-    print(f'Computing estimates using {ns} samples')
+        # TODO: Estimate the value of the integral using CMC
+        (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
+        # visualize_sample_set(sample_set)
+        sample_values_ = collect_samples(integrand,sample_set)
+        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_)
+        abs_error = abs(ground_truth - estimate_cmc)
 
-    # TODO: Estimate the value of the integral using CMC
-    (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
-    # visualize_sample_set(sample_set)
-    sample_values_ = collect_samples([l_i],sample_set)
-    estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_)
-    abs_error = abs(ground_truth - estimate_cmc)
-
-    results[k, 0] = abs_error
+        results[k, 0] += abs_error
 
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #
 # ################################################################################################# #
+results /= n_runs
 for k in range(len(methods_label)):
     method = methods_label[k]
     plt.plot(ns_vector, results[:, k], label=method[0], marker=method[1])
