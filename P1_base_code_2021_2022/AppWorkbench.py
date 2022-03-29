@@ -23,7 +23,10 @@ def collect_samples(function_list, sample_pos_):
 # ########################################################################################### #
 def compute_estimate_cmc(sample_prob_, sample_values_):
     # TODO: PUT YOUR CODE HERE
-
+    print('Sample_Set')
+    print(sample_values_[:3])
+    print('Sample_Prob')
+    print(sample_prob_[:3])
     sum = 0
     for k,i in sample_values_:
         
@@ -101,7 +104,8 @@ for k, ns in enumerate(ns_vector):
     # TODO: Estimate the value of the integral using CMC
     (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
     # visualize_sample_set(sample_set)
-    estimate_cmc = compute_estimate_cmc(sample_prob, sample_set)
+    sample_values_ = collect_samples([l_i],sample_set)
+    estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_)
     abs_error = abs(ground_truth - estimate_cmc)
 
     results[k, 0] = abs_error

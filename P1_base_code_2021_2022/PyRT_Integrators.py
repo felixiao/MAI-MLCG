@@ -120,7 +120,7 @@ class PhongIntegrator(Integrator):
             Ld = RGBColor(0,0,0)
             # Specular
             # Ls = Ks * I / d^2 * max(0,vr)^s
-            # Ls = RGBColor(0,0,0)
+            Ls = RGBColor(0,0,0)
             for light in self.scene.pointLights:
                 wi = Ray(hit.hit_point,light.pos-hit.hit_point)
                 dist = Length(light.pos-hit.hit_point)
@@ -130,7 +130,7 @@ class PhongIntegrator(Integrator):
                     Lwi = light.intensity / dist / dist
                     Ld += Lwi.multiply(lamb.get_value(light.pos-hit.hit_point,wo,hit.normal))
                     # Ls += Lwi.multiply(lamb.get_value_s(light.pos-hit.hit_point,wo,hit.normal))
-            return La+Ld
+            return La+Ld+Ls
             
         else:
             return BLACK

@@ -221,7 +221,7 @@ class BRDF(ABC):
 # Lambertian (perfect diffuse material)
 class Lambertian(BRDF):
     # Initializer
-    def __init__(self, diffuse_colour,n=2):
+    def __init__(self, diffuse_colour,n=20):
         self.kd = diffuse_colour * INVERTED_PI
         self.n  = n
 
@@ -234,18 +234,18 @@ class Lambertian(BRDF):
             return BLACK
 
     # Member Functions
-    def get_value_s(self, wi, wo, normal):
-        wh = (wi+wo)/Length(wi+wo)
-        cos_n_wh = Dot(normal, wh)
-        if cos_n_wh > 0.0:
-            return self.kd * pow(cos_n_wh,self.n)  # Colour
-        else:
-            return BLACK
+    # def get_value_s(self, wi, wo, normal):
+    #     wh = (wi+wo)/Length(wi+wo)
+    #     cos_n_wh = Dot(normal, wh)
+    #     if cos_n_wh > 0.0:
+    #         return self.kd * pow(cos_n_wh,self.n)  # Colour
+    #     else:
+    #         return BLACK
 
 # Blinn Phone
 class BlinnPhone(BRDF):
     # Initializer
-    def __init__(self, diffuse_colour,specular_colour=WHITE,s=2):
+    def __init__(self, diffuse_colour,specular_colour=WHITE,s=20):
         self.kd = diffuse_colour * INVERTED_PI
         self.ks = specular_colour* (s+2) * INVERTED_PI / 2
         self.s  = s
@@ -256,9 +256,11 @@ class BlinnPhone(BRDF):
         cos_n_wi = Dot(normal, wi)
         if cos_n_wi > 0.0:
             colour += self.kd * cos_n_wi  # Colour
-        r = normal*2*cos_n_wi-wi
-        # wh = (wi+wo)/Length(wi+wo)
-        cos_n_wh = Dot(wi,r)
+        
+        # r = normal*2*cos_n_wi-wi
+        wh = (wi+wo)/Length(wi+wo)
+        cos_n_wh = Dot(normal, wh)
+        # cos_n_wh = Dot(wi,r)
         if cos_n_wh > 0.0:
             colour += self.ks * pow(cos_n_wh,self.s)  # Colour
         return colour

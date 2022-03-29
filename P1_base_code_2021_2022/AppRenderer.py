@@ -11,8 +11,8 @@ def sphere_test_scene(areaLS=False, use_env_map=False):
 
     # Create the materials (BRDF)
     white_diffuse = Lambertian(RGBColor(0.8, 0.8, 0.8))
-    green_diffuse = Lambertian(RGBColor(0.2, 0.8, 0.2))
-    sphere_diffuse = BlinnPhone(RGBColor(0.8, 0.2, 0.2),s=20)
+    green_diffuse = BlinnPhone(RGBColor(0.2, 0.8, 0.2))
+    sphere_diffuse = BlinnPhone(RGBColor(0.8, 0.2, 0.2))
     # Create the Scene Geometry (3D objects)
     # sphere
     radius = 2
@@ -80,12 +80,12 @@ def cornell_box_scene(dist, side, areaLS=False):
     plane_point_ur = Vector3D(x_right, y_top, z_far)  # upper right corner
 
     # Create the materials (BRDF)
-    floor_material = BlinnPhone(RGBColor(0.8, 0.8, 0.8),s=20)
-    red_material = BlinnPhone(RGBColor(0.7, 0.2, 0.2),s=20)
-    green_material = BlinnPhone(RGBColor(0.2, 0.7, 0.2),s=20)
+    floor_material = Lambertian(RGBColor(0.8, 0.8, 0.8))
+    red_material = Lambertian(RGBColor(0.7, 0.2, 0.2))
+    green_material = Lambertian(RGBColor(0.2, 0.7, 0.2))
     blue_material = Lambertian(RGBColor(0.2, 0.2, 0.7))
     black_material = Lambertian(BLACK)
-    sphere_material = BlinnPhone(RGBColor(0.2,0.2,0.7),s=20)
+    sphere_material = Lambertian(RGBColor(0.2,0.2,0.7))
 
     # Create the Scene Geometry (3D objects)
     # sphere
@@ -165,6 +165,7 @@ def cornell_box_scene(dist, side, areaLS=False):
 # --------------------------------------------------Set up variables
 FILENAME = 'rendered_image'
 DIRECTORY = 'out/'
+# SCENE   = '_Sphere'
 SCENE   = '_Cornell'
 # -------------------------------------------------Main
 # Create Integrator
@@ -175,8 +176,10 @@ SCENE   = '_Cornell'
 integrator = PhongIntegrator(DIRECTORY + FILENAME+SCENE)
 
 # Create the scene
-# scene = sphere_test_scene(areaLS=False, use_env_map=False)
-scene = cornell_box_scene(0.75, 2, areaLS=False)
+if SCENE == '_Sphere':
+    scene = sphere_test_scene(areaLS=False, use_env_map=False)
+elif SCENE == '_Cornell':
+    scene = cornell_box_scene(0.75, 2, areaLS=False)
 
 # Attach the scene to the integrator
 integrator.add_scene(scene)
