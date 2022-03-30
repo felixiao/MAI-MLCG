@@ -23,9 +23,9 @@ def collect_samples(function_list, sample_pos_):
 # ########################################################################################### #
 def compute_estimate_cmc(sample_prob_, sample_values_):
     # TODO: PUT YOUR CODE HERE
-    sum = 0
+    sum = BLACK
     for k,i in enumerate(sample_values_):
-        sum += i.r/sample_prob_[k]
+        sum += i/sample_prob_[k]
     return sum / len(sample_values_)
 
 
@@ -101,7 +101,7 @@ for i in range(n_runs):
         (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
         # visualize_sample_set(sample_set)
         sample_values_ = collect_samples(integrand,sample_set)
-        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_)
+        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_).r
         abs_error = abs(ground_truth - estimate_cmc)
 
         results[k, 0] += abs_error

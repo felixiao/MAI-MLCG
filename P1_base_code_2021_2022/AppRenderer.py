@@ -165,19 +165,20 @@ def cornell_box_scene(dist, side, areaLS=False):
 # --------------------------------------------------Set up variables
 FILENAME = 'rendered_image'
 DIRECTORY = 'out/'
-# SCENE   = '_Sphere'
-SCENE   = '_Cornell'
+SCENE   = '_Sphere'
+# SCENE   = '_Cornell'
 # -------------------------------------------------Main
 # Create Integrator
 # integrator = LazyIntegrator(DIRECTORY + FILENAME)
 # integrator = IntersectionIntegrator(DIRECTORY + FILENAME)
 # integrator = DepthIntegrator(DIRECTORY + FILENAME)
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
-integrator = PhongIntegrator(DIRECTORY + FILENAME+SCENE)
+# integrator = PhongIntegrator(DIRECTORY + FILENAME + SCENE)
+integrator = CMCIntegrator(100, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
 
 # Create the scene
 if SCENE == '_Sphere':
-    scene = sphere_test_scene(areaLS=False, use_env_map=False)
+    scene = sphere_test_scene(areaLS=False, use_env_map=True)
 elif SCENE == '_Cornell':
     scene = cornell_box_scene(0.75, 2, areaLS=False)
 

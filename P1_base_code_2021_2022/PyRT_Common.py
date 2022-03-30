@@ -336,3 +336,10 @@ class CosinePDF(PDF):
         x = sin(phi) * aux_sqrt
         z = cos(phi) * aux_sqrt
         return Vector3D(x, y, z)
+
+def compute_estimate_cmc(sample_prob_, sample_values_):
+    # TODO: PUT YOUR CODE HERE
+    sum = BLACK
+    for k,i in enumerate(sample_values_):
+        sum += i/sample_prob_[k]
+    return sum / len(sample_values_)

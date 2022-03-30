@@ -2,7 +2,8 @@ from ast import Return
 from PyRT_Common import *
 from PyRT_Core import *
 from random import randint
-
+# import numba
+# from numba import jit
 
 # -------------------------------------------------Integrator Classes
 # the integrators also act like a scene class in that-
@@ -28,6 +29,7 @@ class Integrator(ABC):
         return self.filename
 
     # Simple render loop: launches 1 ray per pixel
+    # @jit(nopython=True)
     def render(self):
         # YOU MUST CHANGE THIS METHOD IN ASSIGNMENTS 1.1 and 1.2:
         cam = self.scene.camera  # camera object
@@ -43,8 +45,10 @@ class Integrator(ABC):
                 self.scene.set_pixel(pixel, x, y)  # save pixel to pixel array
             progress = (x / cam.width) * 100
             print('\r\tProgress: ' + str(progress) + '%', end='')
+            # print('\r\tProgress: ' + str(progress) + '%')
         # save image to file
         print('\r\tProgress: 100% \n\t', end='')
+        # print('\r\tProgress: 100% \n\t')
         full_filename = self.get_filename()
         self.scene.save_image(full_filename)
 
@@ -144,7 +148,31 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
         self.n_samples = n
 
     def compute_color(self, ray):
-        pass
+        hit=self.scene.closest_hit(ray)
+        if hit.has_hit:
+            # Generate a sample set 𝑆 of samples over the hemisphere
+            (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,UniformPDF())
+
+            sample_colors = []
+            # For each sample 𝜔𝑗 ∈ 𝑆:
+            for i,s in enumerate(sample_set):
+                # Center the sample around the surface normal
+                dir = center_around_normal(s,hit.normal)
+                # Create a secondary ray 𝑟 with direction 𝜔𝑗′
+                ray_2 = Ray(hit.hit_point,dir)
+                # Shoot 𝑟 by calling the method scene.closest_hit()
+                hit_2 = self.scene.closest_hit(ray_2)
+                # If 𝑟 hits the scene geometry, then:
+                if hit_2.has_hit:
+                    # 𝐿𝑖(𝜔𝑗) = object_hit.emission;
+                    sample_colors.append(self.scene.object_list[hit_2.primitive_index].emission)
+                elif self.scene.env_map is not None:
+                    sample_colors.append(self.scene.env_map.getValue(dir))
+            return compute_estimate_cmc(sample_prob,sample_colors)
+        elif self.scene.env_map is not None:
+            return self.scene.env_map.getValue(ray.d)
+        else:
+            return BLACK
 
 
 class BayesianMonteCarloIntegrator(Integrator):
