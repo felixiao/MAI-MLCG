@@ -11,8 +11,8 @@ def sphere_test_scene(areaLS=False, use_env_map=False):
 
     # Create the materials (BRDF)
     white_diffuse = Lambertian(RGBColor(0.8, 0.8, 0.8))
-    green_diffuse = BlinnPhone(RGBColor(0.2, 0.8, 0.2))
-    sphere_diffuse = BlinnPhone(RGBColor(0.8, 0.2, 0.2))
+    green_diffuse = Lambertian(RGBColor(0.2, 0.8, 0.2))
+    sphere_diffuse = Lambertian(RGBColor(0.8, 0.8, 0.8))
     # Create the Scene Geometry (3D objects)
     # sphere
     radius = 2
@@ -174,7 +174,7 @@ SCENE   = '_Sphere'
 # integrator = DepthIntegrator(DIRECTORY + FILENAME)
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
 # integrator = PhongIntegrator(DIRECTORY + FILENAME + SCENE)
-integrator = CMCIntegrator(100, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
+integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
 
 # Create the scene
 if SCENE == '_Sphere':
