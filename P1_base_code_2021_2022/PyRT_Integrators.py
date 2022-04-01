@@ -150,9 +150,12 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
     def compute_color(self, ray):
         hit=self.scene.closest_hit(ray)
         if hit.has_hit:
+            kd = self.scene.object_list[hit.primitive_index].get_BRDF().kd
+            
             # Generate a sample set 𝑆 of samples over the hemisphere
             (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,UniformPDF())
-
+            
+            color = RGBColor(0,0,0)
             sample_colors = []
             # For each sample 𝜔𝑗 ∈ 𝑆:
             for i,s in enumerate(sample_set):
@@ -162,12 +165,18 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
                 ray_2 = Ray(hit.hit_point,dir)
                 # Shoot 𝑟 by calling the method scene.closest_hit()
                 hit_2 = self.scene.closest_hit(ray_2)
+
+                l_i = RGBColor(0,0,0)
                 # If 𝑟 hits the scene geometry, then:
                 if hit_2.has_hit:
                     # 𝐿𝑖(𝜔𝑗) = object_hit.emission;
-                    sample_colors.append(self.scene.object_list[hit_2.primitive_index].emission)
+                    l_i = self.scene.object_list[hit.primitive_index].emission
                 elif self.scene.env_map is not None:
-                    sample_colors.append(self.scene.env_map.getValue(dir))
+                    l_i = self.scene.env_map.getValue(dir)
+                color = l_i.multiply(kd)
+                color = color*Dot(hit.normal,dir)
+                sample_colors.append(color)
+            
             return compute_estimate_cmc(sample_prob,sample_colors)
         elif self.scene.env_map is not None:
             return self.scene.env_map.getValue(ray.d)
