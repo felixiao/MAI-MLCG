@@ -174,7 +174,8 @@ SCENE   = '_Sphere'
 # integrator = DepthIntegrator(DIRECTORY + FILENAME)
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
 # integrator = PhongIntegrator(DIRECTORY + FILENAME + SCENE)
-integrator = CMCIntegrator(256, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
+integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
+# integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_CosinePDF')
 
 # Create the scene
 if SCENE == '_Sphere':

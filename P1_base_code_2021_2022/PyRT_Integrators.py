@@ -154,6 +154,7 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
             
             # Generate a sample set 𝑆 of samples over the hemisphere
             (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,UniformPDF())
+            # (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,CosinePDF(20))
             
             color = RGBColor(0,0,0)
             sample_colors = []
