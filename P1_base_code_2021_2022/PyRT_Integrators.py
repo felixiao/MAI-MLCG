@@ -2,6 +2,7 @@ from ast import Return
 from PyRT_Common import *
 from PyRT_Core import *
 from random import randint
+from tqdm import tqdm
 # import numba
 # from numba import jit
 
@@ -33,22 +34,16 @@ class Integrator(ABC):
     def render(self):
         # YOU MUST CHANGE THIS METHOD IN ASSIGNMENTS 1.1 and 1.2:
         cam = self.scene.camera  # camera object
-        # ray = Ray()
         print('Rendering Image: ' + self.get_filename())
+        pbar = tqdm(total=cam.width,desc='Progress',unit='line')
         for x in range(0, cam.width):
             for y in range(0, cam.height):
-                # pixel=GREEN
-                # pixel = RGBColor(x/cam.width,y/cam.height,0)
                 ray = Ray(Vector3D(0,0,0),cam.get_direction(x,y))
                 pixel = self.compute_color(ray)
-                # self.scene.any_hit(ray)
                 self.scene.set_pixel(pixel, x, y)  # save pixel to pixel array
-            progress = (x / cam.width) * 100
-            print('\r\tProgress: ' + str(progress) + '%', end='')
-            # print('\r\tProgress: ' + str(progress) + '%')
+            pbar.update()
         # save image to file
-        print('\r\tProgress: 100% \n\t', end='')
-        # print('\r\tProgress: 100% \n\t')
+        print('Progress: 100% \n\t', end='')
         full_filename = self.get_filename()
         self.scene.save_image(full_filename)
 
@@ -193,4 +188,35 @@ class BayesianMonteCarloIntegrator(Integrator):
         self.myGP = myGP
 
     def compute_color(self, ray):
-        pass
+        hit=self.scene.closest_hit(ray)
+        if hit.has_hit:
+            kd = self.scene.object_list[hit.primitive_index].get_BRDF().kd
+            color = RGBColor(0,0,0)
+            sample_colors = []
+            # For each sample 𝜔𝑗 ∈ 𝑆:
+            for i,s in enumerate(self.myGP.samples_pos):
+                # Center the sample around the surface normal
+                dir = center_around_normal(s,hit.normal)
+                # Create a secondary ray 𝑟 with direction 𝜔𝑗′
+                ray_2 = Ray(hit.hit_point,dir)
+                # Shoot 𝑟 by calling the method scene.closest_hit()
+                hit_2 = self.scene.closest_hit(ray_2)
+
+                l_i = RGBColor(0,0,0)
+                # If 𝑟 hits the scene geometry, then:
+                if hit_2.has_hit:
+                    # 𝐿𝑖(𝜔𝑗) = object_hit.emission;
+                    l_i = self.scene.object_list[hit.primitive_index].emission
+                elif self.scene.env_map is not None:
+                    l_i = self.scene.env_map.getValue(dir)
+                color = l_i.multiply(kd)
+                color = color*Dot(hit.normal,dir)
+                sample_colors.append(color)
+            self.myGP.add_sample_val(sample_colors)
+            return self.myGP.compute_integral_BMC()
+        elif self.scene.env_map is not None:
+            return self.scene.env_map.getValue(ray.d)
+        else:
+            return BLACK
+
+            

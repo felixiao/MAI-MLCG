@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import random
 import time
+from tqdm import tqdm
 
 class MyThreading(threading.Thread):
 
@@ -35,6 +36,8 @@ for i in range(n_threads):
     threads_list.append(obj)
     obj.start()
     # obj.join()
+
+pbar = tqdm(total = H*W,desc = 'Progress',unit='pix')
 while cur_pix< H*W:
     for t in range(n_threads):
         if not threads_list[t].is_alive():
@@ -42,6 +45,7 @@ while cur_pix< H*W:
             cur_pix+=1
             threads_list[t].start()
             # threads_list[t].join()
-            print('\r\tProgress: ' + str(cur_pix /H/W*100) + '%', end='')
+            pbar.update()
+
 cv2.imshow('image',image)
 cv2.waitKey(0)

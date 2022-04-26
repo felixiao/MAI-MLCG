@@ -1,5 +1,8 @@
+from telnetlib import GA
 from PyRT_Common import *
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from GaussianProcess import GP,SobolevCov,SECov,CovarianceFunction
 
 # ############################################################################################## #
 # Given a list of hemispherical functions (function_list) and a set of sample positions over the #
@@ -39,7 +42,7 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 # STEP 0                                                               #
 # Set-up the name of the used methods, and their marker (for plotting) #
 # #################################################################### #
-methods_label = [('MC', 'o')]
+methods_label = [('MC', 'o'),('BMC', 'x')]
 # methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
 n_methods = len(methods_label) # number of tested monte carlo methods
 
@@ -88,14 +91,16 @@ results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
 
 n_runs = 50
 
+
+# GaussianProc.add_sample_pos()
 # ################################# #
 #          MAIN LOOP                #
 # ################################# #
-for i in range(n_runs):
+for i in tqdm(range(n_runs),desc='CMC',unit='run'):
     # for each sample count considered
     for k, ns in enumerate(ns_vector):
 
-        print(f'Computing estimates using {ns} samples')
+        # print(f'Computing estimates using {ns} samples')
 
         # TODO: Estimate the value of the integral using CMC
         (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
@@ -105,12 +110,25 @@ for i in range(n_runs):
         abs_error = abs(ground_truth - estimate_cmc)
 
         results[k, 0] += abs_error
+results[:,0] /= n_runs
 
+# Bayesian Monte Carlo Estimator
+GaussianProc = GP(SobolevCov(),Constant(1))
+n_runs= 10
+for i in tqdm(range(n_runs),desc='BMC',unit='run'):
+    for k, ns in enumerate(ns_vector):
+        (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
+        sample_values_ = collect_samples(integrand,sample_set)
+        GaussianProc.add_sample_pos(sample_set)
+        GaussianProc.add_sample_val(sample_values_)
+        estimate_bmc = GaussianProc.compute_integral_BMC().r
+        
+        results[k, 1] += abs(ground_truth - estimate_bmc)
+results[:,1] /= n_runs
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #
 # ################################################################################################# #
-results /= n_runs
 for k in range(len(methods_label)):
     method = methods_label[k]
     plt.plot(ns_vector, results[:, k], label=method[0], marker=method[1])

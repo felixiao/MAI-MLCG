@@ -2,7 +2,9 @@ from PyRT_Common import *
 from math import exp
 import numpy as np
 from numpy import ndarray
-from abc import ABC, abstractmethod  # Abstract Base Class
+from abc import ABC, abstractmethod
+
+from PyRT_Integrators import CMCIntegrator  # Abstract Base Class
 
 
 class CovarianceFunction(ABC):
@@ -88,14 +90,14 @@ class GP:
 
     # Method which computes and inverts the covariance matrix Q
     #  - IMPORTANT: requires that the samples positions are already known
+    # 𝑄 is a matrix which captures the inter-samples distance
     def compute_inv_Q(self):
         n = len(self.samples_pos)
         Q: ndarray = np.zeros((n, n))
 
-        # ################## #
-        # ADD YOUR CODE HERE #
-        # ################## #
-
+        for i in range(n):
+            for j in range(n):
+                Q[i][j] = self.cov_func.eval(self.samples_pos[i], self.samples_pos[j])
 
         # Add a diagonal of a small amount of noise to avoid numerical instability problems
         Q = Q + np.eye(n, n) * self.noise ** 2
@@ -110,7 +112,7 @@ class GP:
         #  (that is, of each element z_i of z).
 
         # STEP 1: Set-up the pdf used to sample the integrals. We will use the same pdf for all integral estimates
-        # (a uniform pdf). The number of samples used in the estimate is hardcoded (50.000). This is a rather
+        # (a uniform pdf). The number of samples used in the estimate is hardcoded (50,000). This is a rather
         # conservative figure which could perhaps be reduced without impairing the final result.
         uniform_pdf = UniformPDF()
         ns_z = 50000  # number of samples used to estimate z_i
@@ -127,21 +129,21 @@ class GP:
             omega_i = self.samples_pos[i]
 
             # STEP 3.2: Use classic Monte Carlo Integration to compute z_i
-            # ################## #
-            # ADD YOUR CODE HERE #
-            # ################## #
+            # ∫𝑘(𝜔𝑁, 𝜔)𝑑𝜔
+            # self.p_func.eval(omega_i)
+            
+            # estimate_cmc = compute_estimate_cmc(probab, self.samples_val)
+            sample_values = [self.cov_func.eval(omega_i , value) for value in sample_set_z]
 
-
+            z_vec[i] = compute_estimate_cmc(probab,sample_values)
 
         return z_vec
 
     # Method in charge of computing the BMC integral estimate (assuming the the prior mean function has value 0)
     def compute_integral_BMC(self):
         res = BLACK
-
-        # ################## #
-        # ADD YOUR CODE HERE #
-        # ################## #
-
-
+        # print(f'Weights: {self.weights.shape}')
+        # print(f'Sample Val: {len(self.samples_val)}  [0] {self.samples_val[0]}')
+        for (w,y) in zip(self.weights,self.samples_val):
+            res +=  y * w
         return res
