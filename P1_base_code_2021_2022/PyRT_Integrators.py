@@ -1,8 +1,7 @@
-from ast import Return
 from PyRT_Common import *
 from PyRT_Core import *
-from random import randint
 from tqdm import tqdm
+
 # import numba
 # from numba import jit
 
@@ -34,19 +33,22 @@ class Integrator(ABC):
     def render(self):
         # YOU MUST CHANGE THIS METHOD IN ASSIGNMENTS 1.1 and 1.2:
         cam = self.scene.camera  # camera object
+        H = cam.height
+        W = cam.width
+
         print('Rendering Image: ' + self.get_filename())
-        pbar = tqdm(total=cam.width,desc='Progress',unit='line')
-        for x in range(0, cam.width):
-            for y in range(0, cam.height):
-                ray = Ray(Vector3D(0,0,0),cam.get_direction(x,y))
-                pixel = self.compute_color(ray)
-                self.scene.set_pixel(pixel, x, y)  # save pixel to pixel array
-            pbar.update()
+        with tqdm(total=H*W) as pbar:
+            for x in range(cam.width):
+                for y in range(cam.height):
+                    ray = Ray(Vector3D(0,0,0),self.scene.camera.get_direction(x,y))
+                    pixel = self.compute_color(ray)
+                    self.scene.set_pixel(pixel, x, y)
+                    pbar.update()
+            
         # save image to file
         print('Progress: 100% \n\t', end='')
         full_filename = self.get_filename()
         self.scene.save_image(full_filename)
-
 
 class LazyIntegrator(Integrator):
     def __init__(self, filename_):
@@ -193,8 +195,13 @@ class BayesianMonteCarloIntegrator(Integrator):
             kd = self.scene.object_list[hit.primitive_index].get_BRDF().kd
             color = RGBColor(0,0,0)
             sample_colors = []
+            gp = np.random.choice(len(self.myGP))
             # For each sample 𝜔𝑗 ∈ 𝑆:
-            for i,s in enumerate(self.myGP.samples_pos):
+            for i,s in enumerate(self.myGP[gp].samples_pos):
+                # random rotation 
+                a = np.random.random()*2*np.pi
+                s = rotate_around_y(a,s)
+
                 # Center the sample around the surface normal
                 dir = center_around_normal(s,hit.normal)
                 # Create a secondary ray 𝑟 with direction 𝜔𝑗′
@@ -212,8 +219,8 @@ class BayesianMonteCarloIntegrator(Integrator):
                 color = l_i.multiply(kd)
                 color = color*Dot(hit.normal,dir)
                 sample_colors.append(color)
-            self.myGP.add_sample_val(sample_colors)
-            return self.myGP.compute_integral_BMC()
+            self.myGP[gp].add_sample_val(sample_colors)
+            return self.myGP[gp].compute_integral_BMC()
         elif self.scene.env_map is not None:
             return self.scene.env_map.getValue(ray.d)
         else:

@@ -1,8 +1,7 @@
-from telnetlib import GA
 from PyRT_Common import *
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from GaussianProcess import GP,SobolevCov,SECov,CovarianceFunction
+from GaussianProcess import *
 
 # ############################################################################################## #
 # Given a list of hemispherical functions (function_list) and a set of sample positions over the #
@@ -107,9 +106,7 @@ for i in tqdm(range(n_runs),desc='CMC',unit='run'):
         # visualize_sample_set(sample_set)
         sample_values_ = collect_samples(integrand,sample_set)
         estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_).r
-        abs_error = abs(ground_truth - estimate_cmc)
-
-        results[k, 0] += abs_error
+        results[k, 0] += abs(ground_truth - estimate_cmc)
 results[:,0] /= n_runs
 
 # Bayesian Monte Carlo Estimator
@@ -119,9 +116,10 @@ for i in tqdm(range(n_runs),desc='BMC',unit='run'):
     for k, ns in enumerate(ns_vector):
         (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
         sample_values_ = collect_samples(integrand,sample_set)
+        
         GaussianProc.add_sample_pos(sample_set)
         GaussianProc.add_sample_val(sample_values_)
-        estimate_bmc = GaussianProc.compute_integral_BMC().r
+        estimate_bmc = GaussianProc.compute_integral_BMC().r  
         
         results[k, 1] += abs(ground_truth - estimate_bmc)
 results[:,1] /= n_runs

@@ -115,7 +115,7 @@ class GP:
         # (a uniform pdf). The number of samples used in the estimate is hardcoded (50,000). This is a rather
         # conservative figure which could perhaps be reduced without impairing the final result.
         uniform_pdf = UniformPDF()
-        ns_z = 50000  # number of samples used to estimate z_i
+        ns_z = 1000  # number of samples used to estimate z_i
 
         # STEP 2: Generate a samples set for the MC estimate
         sample_set_z, probab = sample_set_hemisphere(ns_z, uniform_pdf)
@@ -130,20 +130,20 @@ class GP:
 
             # STEP 3.2: Use classic Monte Carlo Integration to compute z_i
             # ∫𝑘(𝜔𝑁, 𝜔)𝑑𝜔
-            # self.p_func.eval(omega_i)
-            
-            # estimate_cmc = compute_estimate_cmc(probab, self.samples_val)
             sample_values = [self.cov_func.eval(omega_i , value) for value in sample_set_z]
 
-            z_vec[i] = compute_estimate_cmc(probab,sample_values)
+            sum = 0
+            size = len(sample_values)
+
+            for k in range(size):
+                sum += sample_values[k] / probab[k]
+            z_vec[i] = sum / size
 
         return z_vec
 
     # Method in charge of computing the BMC integral estimate (assuming the the prior mean function has value 0)
     def compute_integral_BMC(self):
         res = BLACK
-        # print(f'Weights: {self.weights.shape}')
-        # print(f'Sample Val: {len(self.samples_val)}  [0] {self.samples_val[0]}')
         for (w,y) in zip(self.weights,self.samples_val):
             res +=  y * w
         return res

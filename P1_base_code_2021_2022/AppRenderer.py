@@ -1,9 +1,8 @@
-from GaussianProcess import GP,SobolevCov,SECov,CovarianceFunction
+from GaussianProcess import *
 from PyRT_Core import *
 from PyRT_Integrators import *
 
 import time
-
 
 def sphere_test_scene(areaLS=False, use_env_map=False):
     # Create a scene object
@@ -178,11 +177,16 @@ SCENE   = '_Sphere'
 # integrator = PhongIntegrator(DIRECTORY + FILENAME + SCENE)
 # integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
 # integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_CosinePDF')
+
+
 ns = 40
-GaussianProc = GP(SobolevCov(),Constant(1))
-(sample_set, sample_prob) = sample_set_hemisphere(ns,UniformPDF())
-GaussianProc.add_sample_pos(sample_set)
-integrator = BayesianMonteCarloIntegrator(ns,GaussianProc, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
+gp_list = []
+for i in range(ns):
+    GaussianProc = GP(SobolevCov(),Constant(1))
+    (sample_set, sample_prob) = sample_set_hemisphere(ns,UniformPDF())
+    GaussianProc.add_sample_pos(sample_set)
+    gp_list.append(GaussianProc)
+integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
 
 # Create the scene
 if SCENE == '_Sphere':
