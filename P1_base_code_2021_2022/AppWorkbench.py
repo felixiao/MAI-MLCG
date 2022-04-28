@@ -41,8 +41,8 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 # STEP 0                                                               #
 # Set-up the name of the used methods, and their marker (for plotting) #
 # #################################################################### #
-methods_label = [('MC', 'o'),('BMC', 'x')]
-# methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
+# methods_label = [('MC', 'o'),('BMC', 'x')]
+methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
 n_methods = len(methods_label) # number of tested monte carlo methods
 
 # ######################################################## #
@@ -62,8 +62,8 @@ integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
 # Set-up the pdf used to sample the hemisphere #
 # ############################################ #
 uniform_pdf = UniformPDF()
-#exponent = 1
-#cosine_pdf = CosinePDF(exponent)
+exponent = 2
+cosine_pdf = CosinePDF(exponent)
 
 
 # ###################################################################### #
@@ -88,19 +88,13 @@ n_samples_count = len(ns_vector)
 # Initialize a matrix of estimate error at zero
 results = np.zeros((n_samples_count, n_methods))  # Matrix of average error
 
-n_runs = 50
-
-
-# GaussianProc.add_sample_pos()
 # ################################# #
 #          MAIN LOOP                #
 # ################################# #
+n_runs = 50
 for i in tqdm(range(n_runs),desc='CMC',unit='run'):
     # for each sample count considered
     for k, ns in enumerate(ns_vector):
-
-        # print(f'Computing estimates using {ns} samples')
-
         # TODO: Estimate the value of the integral using CMC
         (sample_set, sample_prob) = sample_set_hemisphere(ns,uniform_pdf)
         # visualize_sample_set(sample_set)
@@ -108,6 +102,17 @@ for i in tqdm(range(n_runs),desc='CMC',unit='run'):
         estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_).r
         results[k, 0] += abs(ground_truth - estimate_cmc)
 results[:,0] /= n_runs
+
+for i in tqdm(range(n_runs),desc='CMCIS',unit='run'):
+    # for each sample count considered
+    for k, ns in enumerate(ns_vector):
+        # TODO: Estimate the value of the integral using CMC
+        (sample_set, sample_prob) = sample_set_hemisphere(ns,cosine_pdf)
+        # visualize_sample_set(sample_set)
+        sample_values_ = collect_samples(integrand,sample_set)
+        estimate_cmc = compute_estimate_cmc(sample_prob, sample_values_).r
+        results[k, 1] += abs(ground_truth - estimate_cmc)
+results[:,1] /= n_runs
 
 # Bayesian Monte Carlo Estimator
 GaussianProc = GP(SobolevCov(),Constant(1))
@@ -121,8 +126,21 @@ for i in tqdm(range(n_runs),desc='BMC',unit='run'):
         GaussianProc.add_sample_val(sample_values_)
         estimate_bmc = GaussianProc.compute_integral_BMC().r  
         
-        results[k, 1] += abs(ground_truth - estimate_bmc)
-results[:,1] /= n_runs
+        results[k, 2] += abs(ground_truth - estimate_bmc)
+results[:,2] /= n_runs
+
+# Bayesian Monte Carlo Estimator
+for i in tqdm(range(n_runs),desc='BMCIS',unit='run'):
+    for k, ns in enumerate(ns_vector):
+        (sample_set, sample_prob) = sample_set_hemisphere(ns,cosine_pdf)
+        sample_values_ = collect_samples(integrand,sample_set)
+        
+        GaussianProc.add_sample_pos(sample_set)
+        GaussianProc.add_sample_val(sample_values_)
+        estimate_bmc = GaussianProc.compute_integral_BMC().r  
+        
+        results[k, 3] += abs(ground_truth - estimate_bmc)
+results[:,3] /= n_runs
 
 # ################################################################################################# #
 # Create a plot with the average error for each method, as a function of the number of used samples #
