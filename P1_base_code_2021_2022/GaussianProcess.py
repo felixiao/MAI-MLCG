@@ -94,11 +94,9 @@ class GP:
     def compute_inv_Q(self):
         n = len(self.samples_pos)
         Q: ndarray = np.zeros((n, n))
-
         for i in range(n):
             for j in range(n):
                 Q[i][j] = self.cov_func.eval(self.samples_pos[i], self.samples_pos[j])
-
         # Add a diagonal of a small amount of noise to avoid numerical instability problems
         Q = Q + np.eye(n, n) * self.noise ** 2
         return np.linalg.inv(Q)
@@ -115,10 +113,11 @@ class GP:
         # (a uniform pdf). The number of samples used in the estimate is hardcoded (50,000). This is a rather
         # conservative figure which could perhaps be reduced without impairing the final result.
         uniform_pdf = UniformPDF()
-        ns_z = 1000  # number of samples used to estimate z_i
+        ns_z = 5000  # number of samples used to estimate z_i
 
         # STEP 2: Generate a samples set for the MC estimate
         sample_set_z, probab = sample_set_hemisphere(ns_z, uniform_pdf)
+        # sample_set_z, probab = sample_set_hemisphere(ns_z, cosine_pdf)
         ns = len(self.samples_pos)
         z_vec = np.zeros(ns)
 
@@ -130,14 +129,11 @@ class GP:
 
             # STEP 3.2: Use classic Monte Carlo Integration to compute z_i
             # ∫𝑘(𝜔𝑁, 𝜔)𝑑𝜔
-            sample_values = [self.cov_func.eval(omega_i , value) for value in sample_set_z]
-
-            sum = 0
-            size = len(sample_values)
-
-            for k in range(size):
-                sum += sample_values[k] / probab[k]
-            z_vec[i] = sum / size
+            sum_integral = 0
+            for sample,prob in zip(sample_set_z,probab):
+                sum_integral+= self.cov_func.eval(omega_i,sample)*self.p_func.eval(sample) / prob
+ 
+            z_vec[i] = sum_integral / ns_z
 
         return z_vec
 

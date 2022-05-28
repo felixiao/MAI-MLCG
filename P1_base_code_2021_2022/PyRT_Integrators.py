@@ -1,7 +1,7 @@
 from PyRT_Common import *
 from PyRT_Core import *
 from tqdm import tqdm
-
+from GaussianProcess import *
 # import numba
 # from numba import jit
 
@@ -139,10 +139,11 @@ class PhongIntegrator(Integrator):
 
 class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
 
-    def __init__(self, n, filename_, experiment_name=''):
+    def __init__(self, n, filename_, experiment_name='',pdf=UniformPDF()):
         filename_mc = filename_ + '_MC_' + str(n) + '_samples' + experiment_name
         super().__init__(filename_mc)
         self.n_samples = n
+        self.pdf = pdf
 
     def compute_color(self, ray):
         hit=self.scene.closest_hit(ray)
@@ -150,7 +151,7 @@ class CMCIntegrator(Integrator):  # Classic Monte Carlo Integrator
             kd = self.scene.object_list[hit.primitive_index].get_BRDF().kd
             
             # Generate a sample set 𝑆 of samples over the hemisphere
-            (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,UniformPDF())
+            (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,self.pdf)
             # (sample_set, sample_prob) = sample_set_hemisphere(self.n_samples,CosinePDF(20))
             
             color = RGBColor(0,0,0)
@@ -227,3 +228,9 @@ class BayesianMonteCarloIntegrator(Integrator):
             return BLACK
 
             
+def compute_estimate_cmc(sample_prob_, sample_values_):
+    # TODO: PUT YOUR CODE HERE
+    sum = BLACK
+    for k,i in enumerate(sample_values_):
+        sum += i/sample_prob_[k]
+    return sum / len(sample_values_)

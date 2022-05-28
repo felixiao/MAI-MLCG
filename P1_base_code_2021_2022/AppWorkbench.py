@@ -31,7 +31,6 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
     return sum / len(sample_values_)
 
 
-
 # ----------------------------- #
 # ---- Main Script Section ---- #
 # ----------------------------- #
@@ -42,6 +41,7 @@ def compute_estimate_cmc(sample_prob_, sample_values_):
 # Set-up the name of the used methods, and their marker (for plotting) #
 # #################################################################### #
 # methods_label = [('MC', 'o'),('BMC', 'x')]
+# methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x')]
 methods_label = [('MC', 'o'), ('MC IS', 'v'), ('BMC', 'x'), ('BMC IS', '1')] # for later practices
 n_methods = len(methods_label) # number of tested monte carlo methods
 
@@ -55,14 +55,14 @@ l_i = Constant(1)
 kd = 1
 brdf = Constant(kd)
 cosine_term = CosineLobe(1)
-integrand = [l_i, brdf, cosine_term]  # l_i * brdf * cos
-
+integrand = [CosineLobe(4),brdf]  # l_i * brdf * cos
+integrand_BMCIS = [CosineLobe(3),brdf]
 # ############################################ #
 #                 STEP 2                       #
 # Set-up the pdf used to sample the hemisphere #
 # ############################################ #
 uniform_pdf = UniformPDF()
-exponent = 2
+exponent = 1
 cosine_pdf = CosinePDF(exponent)
 
 
@@ -70,7 +70,7 @@ cosine_pdf = CosinePDF(exponent)
 # Compute/set the ground truth value of the integral we want to estimate #
 # NOTE: in practice, when computing an image, this value is unknown      #
 # ###################################################################### #
-ground_truth = cosine_term.get_integral()  # Assuming that L_i = 1 and BRDF = 1
+ground_truth = CosineLobe(4).get_integral()  # Assuming that L_i = 1 and BRDF = 1
 print('Ground truth: ' + str(ground_truth))
 
 
@@ -103,10 +103,10 @@ for i in tqdm(range(n_runs),desc='CMC',unit='run'):
         results[k, 0] += abs(ground_truth - estimate_cmc)
 results[:,0] /= n_runs
 
+# Monte-Carlo Importance Sampling
 for i in tqdm(range(n_runs),desc='CMCIS',unit='run'):
     # for each sample count considered
     for k, ns in enumerate(ns_vector):
-        # TODO: Estimate the value of the integral using CMC
         (sample_set, sample_prob) = sample_set_hemisphere(ns,cosine_pdf)
         # visualize_sample_set(sample_set)
         sample_values_ = collect_samples(integrand,sample_set)
@@ -129,11 +129,12 @@ for i in tqdm(range(n_runs),desc='BMC',unit='run'):
         results[k, 2] += abs(ground_truth - estimate_bmc)
 results[:,2] /= n_runs
 
-# Bayesian Monte Carlo Estimator
+# Bayesian Monte Carlo Estimator Importance Sampling
+GaussianProc = GP(SobolevCov(),CosineLobe(1))
 for i in tqdm(range(n_runs),desc='BMCIS',unit='run'):
     for k, ns in enumerate(ns_vector):
         (sample_set, sample_prob) = sample_set_hemisphere(ns,cosine_pdf)
-        sample_values_ = collect_samples(integrand,sample_set)
+        sample_values_ = collect_samples(integrand_BMCIS,sample_set)
         
         GaussianProc.add_sample_pos(sample_set)
         GaussianProc.add_sample_val(sample_values_)
@@ -150,4 +151,5 @@ for k in range(len(methods_label)):
     plt.plot(ns_vector, results[:, k], label=method[0], marker=method[1])
 
 plt.legend()
-plt.show()
+# plt.show()
+plt.savefig('benchmark.png')

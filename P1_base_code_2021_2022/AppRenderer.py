@@ -168,6 +168,12 @@ FILENAME = 'rendered_image'
 DIRECTORY = 'out/'
 SCENE   = '_Sphere'
 # SCENE   = '_Cornell'
+areaLS = True
+# Create the scene
+if SCENE == '_Sphere':
+    scene = sphere_test_scene(areaLS=areaLS, use_env_map=True)
+elif SCENE == '_Cornell':
+    scene = cornell_box_scene(0.75, 2, areaLS=areaLS)
 # -------------------------------------------------Main
 # Create Integrator
 # integrator = LazyIntegrator(DIRECTORY + FILENAME)
@@ -175,24 +181,32 @@ SCENE   = '_Sphere'
 # integrator = DepthIntegrator(DIRECTORY + FILENAME)
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
 # integrator = PhongIntegrator(DIRECTORY + FILENAME + SCENE)
-# integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
-# integrator = CMCIntegrator(40, DIRECTORY + FILENAME + SCENE,'_CosinePDF')
+# Classic Monte Carlo
+# integrator = CMCIntegrator(40, DIRECTORY+'CMC/' + FILENAME + SCENE,'_UniformPDF'+'_areaLS' if areaLS else '')
+# Classic Monte Carlo Importance Sampling
+# integrator = CMCIntegrator(40, DIRECTORY +'CMC IS/'+ FILENAME + SCENE,'_CosinePDF_IS'+'_areaLS' if areaLS else '',CosinePDF(1))
 
 
-ns = 40
+ns = 256
 gp_list = []
+
+# Bayesian MonteCarlo Integrator
 for i in range(ns):
     GaussianProc = GP(SobolevCov(),Constant(1))
     (sample_set, sample_prob) = sample_set_hemisphere(ns,UniformPDF())
     GaussianProc.add_sample_pos(sample_set)
     gp_list.append(GaussianProc)
-integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY + FILENAME + SCENE,'_UniformPDF')
+integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY +'BMC/'+ FILENAME + SCENE,'_UniformPDF'+'_areaLS' if areaLS else '')
 
-# Create the scene
-if SCENE == '_Sphere':
-    scene = sphere_test_scene(areaLS=False, use_env_map=True)
-elif SCENE == '_Cornell':
-    scene = cornell_box_scene(0.75, 2, areaLS=False)
+# Bayesian MonteCarlo Importance Sampling Integrator
+# for i in range(ns):
+#     GaussianProc = GP(SobolevCov(),CosineLobe(1))
+#     (sample_set, sample_prob) = sample_set_hemisphere(ns,CosinePDF(1))
+#     GaussianProc.add_sample_pos(sample_set)
+#     gp_list.append(GaussianProc)
+# integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY +'BMC IS/'+ FILENAME + SCENE,'_CosinePDF_IS'+'_areaLS' if areaLS else '')
+
+
 
 # Attach the scene to the integrator
 integrator.add_scene(scene)
@@ -207,5 +221,5 @@ print("--- Rendering time: %s seconds ---" % end_time)
 image_nd_array = np.load(integrator.get_filename() + '.npy')
 tonemapper = cv2.createTonemap(gamma=2.5)
 image_nd_array_ldr = tonemapper.process(image_nd_array.astype(np.single)) * 255.0
-cv2.imshow('Ray Tracer MLCG 2021-2022', cv2.cvtColor(image_nd_array_ldr.astype(np.uint8), cv2.COLOR_BGR2RGB))
+cv2.imshow(integrator.get_filename(), cv2.cvtColor(image_nd_array_ldr.astype(np.uint8), cv2.COLOR_BGR2RGB))
 cv2.waitKey(0)
