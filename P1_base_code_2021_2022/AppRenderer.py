@@ -168,7 +168,7 @@ FILENAME = 'rendered_image'
 DIRECTORY = 'out/'
 SCENE   = '_Sphere'
 # SCENE   = '_Cornell'
-areaLS = True
+areaLS = False
 # Create the scene
 if SCENE == '_Sphere':
     scene = sphere_test_scene(areaLS=areaLS, use_env_map=True)
@@ -182,29 +182,29 @@ elif SCENE == '_Cornell':
 # integrator = NormalIntegrator(DIRECTORY + FILENAME)
 # integrator = PhongIntegrator(DIRECTORY + FILENAME + SCENE)
 # Classic Monte Carlo
-# integrator = CMCIntegrator(40, DIRECTORY+'CMC/' + FILENAME + SCENE,'_UniformPDF'+'_areaLS' if areaLS else '')
+# integrator = CMCIntegrator(40, DIRECTORY+'CMC/' + FILENAME + SCENE,'_UniformPDF_areaLS' if areaLS else '_UniformPDF')
 # Classic Monte Carlo Importance Sampling
-# integrator = CMCIntegrator(40, DIRECTORY +'CMC IS/'+ FILENAME + SCENE,'_CosinePDF_IS'+'_areaLS' if areaLS else '',CosinePDF(1))
+# integrator = CMCIntegrator(40, DIRECTORY +'CMC IS/'+ FILENAME + SCENE,'_CosinePDF_IS_areaLS' if areaLS else '_CosinePDF_IS',CosinePDF(1))
 
 
-ns = 256
+ns = 40
 gp_list = []
 
 # Bayesian MonteCarlo Integrator
-for i in range(ns):
-    GaussianProc = GP(SobolevCov(),Constant(1))
-    (sample_set, sample_prob) = sample_set_hemisphere(ns,UniformPDF())
-    GaussianProc.add_sample_pos(sample_set)
-    gp_list.append(GaussianProc)
-integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY +'BMC/'+ FILENAME + SCENE,'_UniformPDF'+'_areaLS' if areaLS else '')
-
-# Bayesian MonteCarlo Importance Sampling Integrator
 # for i in range(ns):
-#     GaussianProc = GP(SobolevCov(),CosineLobe(1))
-#     (sample_set, sample_prob) = sample_set_hemisphere(ns,CosinePDF(1))
+#     GaussianProc = GP(SobolevCov(),Constant(1))
+#     (sample_set, sample_prob) = sample_set_hemisphere(ns,UniformPDF())
 #     GaussianProc.add_sample_pos(sample_set)
 #     gp_list.append(GaussianProc)
-# integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY +'BMC IS/'+ FILENAME + SCENE,'_CosinePDF_IS'+'_areaLS' if areaLS else '')
+# integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY +'BMC/'+ FILENAME + SCENE,'_UniformPDF_areaLS' if areaLS else '_UniformPDF')
+
+# Bayesian MonteCarlo Importance Sampling Integrator
+for i in range(ns):
+    GaussianProc = GP(SobolevCov(),CosineLobe(1))
+    (sample_set, sample_prob) = sample_set_hemisphere(ns,CosinePDF(1))
+    GaussianProc.add_sample_pos(sample_set)
+    gp_list.append(GaussianProc)
+integrator = BayesianMonteCarloIntegrator(ns,gp_list, DIRECTORY +'BMC IS/'+ FILENAME + SCENE,'_CosinePDF_IS_areaLS' if areaLS else '_CosinePDF_IS')
 
 
 
